@@ -112,7 +112,19 @@ export class Tick implements GameEvent {
   }
 }
 
-const handleBallPaddleCollision = ({ pos, leftToRightApproach }: Paddle, ball: Ball): Ball => {
+const newBallAngle = (paddle: Paddle, ball: Ball): Ball => {
+  const yOffset = ball.pos.y - paddle.pos.y;
+  const multiplier =
+    yOffset === 0 ? 0 : (Math.abs(yOffset) / yOffset) * (Math.abs(ball.vel.x) / ball.vel.x);
+  const offScore =
+    multiplier * (Math.abs(yOffset) / (constants.paddleHeight / 2 + constants.ballRadius));
+  // Max 45 / -45 change in directory
+  const degreesOff = offScore * 60;
+  return { pos: ball.pos, vel: ball.vel.rotate(180 - degreesOff) };
+};
+
+const handleBallPaddleCollision = (paddle: Paddle) => (ball: Ball): Ball => {
+  const { pos, leftToRightApproach } = paddle;
   const velLeftToRight = ball.vel.x > 0;
   const widthMultiplier = leftToRightApproach ? -1 : 1;
 
@@ -130,11 +142,18 @@ const handleBallPaddleCollision = ({ pos, leftToRightApproach }: Paddle, ball: B
     ball.pos.y < Math.max(yPaddleTop, yPaddleBottom) &&
     ball.pos.y > Math.min(yPaddleTop, yPaddleBottom);
 
-  return xCollided && yCollided;
+  return xCollided && yCollided ? newBallAngle(paddle, ball) : ball;
 };
 
+const handleRoofHit = (ball: Ball): Ball => {};
+
 const handleCollisions = (gameState: GameState): GameState => {
-  return gameState;
+  const ballCollisionHandlers = [
+    handleBallPaddleCollision(gameState.leftPaddle),
+    handleBallPaddleCollision(gameState.rightPaddle),
+  ];
+  const ball = ballCollisionHandlers.reduce((acc, handler) => handler(acc), gameState.ball);
+  return { ...gameState, ball: ball };
 };
 
 export class PaddleMove implements GameEvent {
