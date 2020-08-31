@@ -5,149 +5,15 @@ export type GameState = Readonly<{
   score: Score;
   breakTicks: BreakTicks;
   gameOver: boolean;
-  leftWall: Collidable;
-  rightWall: Collidable;
-  roof: Collidable;
-  floor: Collidable;
 }>;
 
-interface Collidable {
-  ballCollided: (ball: Ball) => boolean;
-  nextState: (gameState: GameState) => GameState;
-  type: string;
+interface Paddle {
+  pos: Vector;
 }
 
-export class Wall implements Collidable {
-  constructor(public readonly x: number, public readonly leftToRightApproach: boolean) {}
-
-  ballCollided(ball: Ball) {
-    const multiple = this.leftToRightApproach ? 1 : -1;
-    const velDir = Math.abs(ball.vel.x) / ball.vel.x;
-    return (ball.pos.x - this.x) * multiple > constants.ballRadius && velDir === multiple;
-  }
-  nextState(gameState: GameState): GameState {
-    return {
-      ...gameState,
-      score: gameState.score - +this.leftToRightApproach,
-      breakTicks: new BreakTicks(100),
-    };
-  }
-  public readonly type: string = 'collidable';
-}
-
-export class HorizontalSurface implements Collidable {
-  constructor(public readonly y: number, public readonly topToBottomApproach: boolean) {}
-  ballCollided(ball: Ball) {
-    const multiplier = this.topToBottomApproach ? -1 : 1;
-    const velTopToBot = ball.vel.y > 0;
-    const yInside = this.y + multiplier * constants.ballRadius;
-    const yTop = this.y;
-    return (
-      ball.pos.y < Math.max(yInside, yTop) &&
-      ball.pos.y > Math.min(yInside, yTop) &&
-      velTopToBot === this.topToBottomApproach
-    );
-  }
-
-  nextState(gameState: GameState): GameState {
-    const { pos, vel } = gameState.ball;
-    // Invert y velocity
-    return {
-      ...gameState,
-      ball: new Ball(pos, new Vector(vel.x, -vel.y)),
-    };
-  }
-
-  public readonly type: string = 'collidable';
-}
-
-export class Paddle implements Collidable {
-  constructor(
-    public readonly id: string,
-    public readonly pos: Vector,
-    public readonly leftToRightApproach: boolean
-  ) {}
-
-  ballCollided(ball: Ball): boolean {
-    const velLeftToRight = ball.vel.x > 0;
-    const widthMultiplier = this.leftToRightApproach ? -1 : 1;
-
-    const xPaddleFront =
-      this.pos.x +
-      (widthMultiplier * constants.paddleWidth) / 2 +
-      constants.ballRadius * widthMultiplier;
-    const xPaddleMiddle = this.pos.x;
-    const xCollided =
-      ball.pos.x < Math.max(xPaddleFront, xPaddleMiddle) &&
-      ball.pos.x > Math.min(xPaddleFront, xPaddleMiddle) &&
-      velLeftToRight === this.leftToRightApproach;
-
-    const yPaddleTop = this.pos.y + constants.paddleHeight / 2 + constants.ballRadius;
-    const yPaddleBottom = this.pos.y - constants.paddleHeight / 2 - constants.ballRadius;
-    const yCollided =
-      ball.pos.y < Math.max(yPaddleTop, yPaddleBottom) &&
-      ball.pos.y > Math.min(yPaddleTop, yPaddleBottom);
-
-    return xCollided && yCollided;
-  }
-
-  nextState(gameState: GameState): GameState {
-    const { pos, vel } = gameState.ball;
-    return {
-      ...gameState,
-      ball: gameState.ball.newBallAngle(this),
-    };
-  }
-
-  ballYOffset(ball: Ball): number {
-    return ball.pos.y - this.pos.y;
-  }
-
-  movePaddle(pixelsDown: number): Paddle {
-    const newY = Math.max(0, Math.min(constants.canvasHeight, this.pos.y + pixelsDown));
-    return new Paddle(this.id, new Vector(this.pos.x, newY), this.leftToRightApproach);
-  }
-
-  mirrorBall(ball: Ball): Paddle {
-    const yOffset = this.pos.y - ball.pos.y;
-
-    // If already inline with ball, do nothing
-    if (Math.abs(yOffset) < constants.paddleHeight / 2) {
-      return this;
-    }
-    const directMult = yOffset === 0 ? 0 : -Math.abs(yOffset) / yOffset;
-    return new Paddle(
-      this.id,
-      new Vector(this.pos.x, this.pos.y + directMult * constants.leftPaddleSpeed),
-      this.leftToRightApproach
-    );
-  }
-
-  public readonly type: string = 'collidable';
-}
-
-export class Ball {
-  constructor(public readonly pos: Vector, public readonly vel: Vector) {}
-
-  nextBallPos() {
-    return new Ball(new Vector(this.pos.x + this.vel.x, this.pos.y + this.vel.y), this.vel);
-  }
-
-  newBallAngle(paddle: Paddle): Ball {
-    const yOffset = this.pos.y - paddle.pos.y;
-
-    const multiplier =
-      yOffset === 0 ? 0 : (Math.abs(yOffset) / yOffset) * (Math.abs(this.vel.x) / this.vel.x);
-
-    const offScore =
-      multiplier * (Math.abs(yOffset) / (constants.paddleHeight / 2 + constants.ballRadius));
-
-    // Max 45 / -45 change in directory
-
-    const degreesOff = offScore * 60;
-
-    return new Ball(this.pos, this.vel.rotate(180 - degreesOff));
-  }
+interface Ball {
+  pos: Vector;
+  vel: Vector;
 }
 
 export type Score = number;
