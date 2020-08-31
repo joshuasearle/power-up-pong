@@ -112,7 +112,26 @@ export class Tick implements GameEvent {
   }
 }
 
-const handleBallPaddleCollision = (paddle: Paddle, ball: Ball): Ball => {};
+const handleBallPaddleCollision = ({ pos, leftToRightApproach }: Paddle, ball: Ball): Ball => {
+  const velLeftToRight = ball.vel.x > 0;
+  const widthMultiplier = leftToRightApproach ? -1 : 1;
+
+  const xPaddleFront =
+    pos.x + (widthMultiplier * constants.paddleWidth) / 2 + constants.ballRadius * widthMultiplier;
+  const xPaddleMiddle = pos.x;
+  const xCollided =
+    ball.pos.x < Math.max(xPaddleFront, xPaddleMiddle) &&
+    ball.pos.x > Math.min(xPaddleFront, xPaddleMiddle) &&
+    velLeftToRight === leftToRightApproach;
+
+  const yPaddleTop = pos.y + constants.paddleHeight / 2 + constants.ballRadius;
+  const yPaddleBottom = pos.y - constants.paddleHeight / 2 - constants.ballRadius;
+  const yCollided =
+    ball.pos.y < Math.max(yPaddleTop, yPaddleBottom) &&
+    ball.pos.y > Math.min(yPaddleTop, yPaddleBottom);
+
+  return xCollided && yCollided;
+};
 
 const handleCollisions = (gameState: GameState): GameState => {
   return gameState;
