@@ -3,8 +3,6 @@ import { map, scan, filter, merge, flatMap, take, concat, reduce } from 'rxjs/op
 
 import {
   GameState,
-  Paddle,
-  Ball,
   Vector,
   GameEvent,
   Tick,
@@ -13,8 +11,6 @@ import {
   Key,
   constants,
   initialBall,
-  Wall,
-  HorizontalSurface,
   BreakTicks,
 } from './types';
 import updateView from './view';
@@ -30,24 +26,23 @@ function pong() {
   // Document your code!
 
   const initialGameState: GameState = {
-    leftPaddle: new Paddle(
-      'left',
-      new Vector(constants.paddleDistFromEdge, constants.canvasHeight / 2),
-      false
-    ),
-    rightPaddle: new Paddle(
-      'right',
-      new Vector(constants.canvasWidth - constants.paddleDistFromEdge, constants.canvasHeight / 2),
-      true
-    ),
+    leftPaddle: {
+      id: 'left',
+      pos: new Vector(constants.paddleDistFromEdge, constants.canvasHeight / 2),
+      leftToRightApproach: false,
+    },
+    rightPaddle: {
+      id: 'right',
+      pos: new Vector(
+        constants.canvasWidth - constants.paddleDistFromEdge,
+        constants.canvasHeight / 2
+      ),
+      leftToRightApproach: true,
+    },
     ball: initialBall,
     score: 0,
     breakTicks: new BreakTicks(0),
     gameOver: false,
-    leftWall: new Wall(0, false),
-    rightWall: new Wall(constants.canvasWidth, true),
-    roof: new HorizontalSurface(0, false),
-    floor: new HorizontalSurface(constants.canvasHeight, true),
   };
 
   // Create a tick event every 10ms, and also merge in listeners for the keyboard events

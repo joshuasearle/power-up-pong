@@ -7,11 +7,13 @@ export type GameState = Readonly<{
   gameOver: boolean;
 }>;
 
-interface Paddle {
+export interface Paddle {
+  id: string;
   pos: Vector;
+  leftToRightApproach: boolean;
 }
 
-interface Ball {
+export interface Ball {
   pos: Vector;
   vel: Vector;
 }
@@ -63,6 +65,35 @@ export interface GameEvent {
   nextState: (gameState: GameState) => GameState;
 }
 
+const mirrorBall = (paddle: Paddle, ball: Ball): Paddle => {
+  const yOffset = paddle.pos.y - ball.pos.y;
+
+  // If already inline with ball, do nothing
+  if (Math.abs(yOffset) < constants.paddleHeight / 2) {
+    return paddle;
+  }
+  const directMult = yOffset === 0 ? 0 : -Math.abs(yOffset) / yOffset;
+  return {
+    ...paddle,
+    pos: new Vector(paddle.pos.x, paddle.pos.y + directMult * constants.leftPaddleSpeed),
+  };
+};
+
+const nextBallPos = ({ pos, vel }: Ball): Ball => {
+  return {
+    pos: new Vector(pos.x + vel.x, pos.y + vel.y),
+    vel,
+  };
+};
+
+const movePaddle = (paddle: Paddle, pixelsDown: number): Paddle => {
+  const { pos } = paddle;
+  return {
+    ...paddle,
+    pos: new Vector(pos.x, pos.y + pixelsDown),
+  };
+};
+
 export class Tick implements GameEvent {
   constructor(public readonly elapsed: number) {}
 
@@ -71,28 +102,21 @@ export class Tick implements GameEvent {
     if (prevState.breakTicks.pauseThisRound()) {
       return prevState.breakTicks.nextState(prevState);
     }
-    const collisionsHandled = this.handleCollisions(prevState);
+    const collisionsHandled = handleCollisions(prevState);
+    const { leftPaddle, ball } = collisionsHandled;
     return {
       ...collisionsHandled,
-      leftPaddle: prevState.leftPaddle.mirrorBall(prevState.ball),
-      ball: collisionsHandled.ball.nextBallPos(),
+      leftPaddle: mirrorBall(leftPaddle, ball),
+      ball: nextBallPos(ball),
     };
   }
-
-  handleCollisions = (gameState: GameState): GameState => {
-    // TypeScript doesn't have type checking against interfaces
-    // Took the word of this random guy on stack overflow
-    // (https://stackoverflow.com/questions/14425568/interface-type-check-with-typescript)
-    // So added type checking property "type"
-    return (
-      Object.values(gameState)
-        // .filter(gameObj => gameObj.hasOwnProperty('type'))
-        .filter((gameObj: Collidable) => gameObj.type === 'collidable')
-        .filter((collidable: Collidable) => collidable.ballCollided(gameState.ball))
-        .reduce((newState, collidable: Collidable) => collidable.nextState(newState), gameState)
-    );
-  };
 }
+
+const handleBallPaddleCollision = (paddle: Paddle, ball: Ball): Ball => {};
+
+const handleCollisions = (gameState: GameState): GameState => {
+  return gameState;
+};
 
 export class PaddleMove implements GameEvent {
   constructor(public readonly pixelsDown: number, public readonly isPlayer: boolean) {}
@@ -102,7 +126,7 @@ export class PaddleMove implements GameEvent {
     const prevPaddle = this.isPlayer ? prevState.rightPaddle : prevState.leftPaddle;
     return {
       ...prevState,
-      rightPaddle: prevPaddle.movePaddle(this.pixelsDown),
+      rightPaddle: movePaddle(prevState.rightPaddle, this.pixelsDown),
     };
   }
 }
@@ -119,7 +143,7 @@ export const constants = {
   leftPaddleSpeed: 1.5,
 };
 
-export const initialBall = new Ball(
-  new Vector(100, constants.canvasHeight / 2),
-  constants.initialBallVelocity
-);
+export const initialBall = {
+  pos: new Vector(100, constants.canvasHeight / 2),
+  vel: constants.initialBallVelocity,
+};
