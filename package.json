@@ -2,7 +2,7 @@
   "name": "workshop4",
   "version": "1.0.0",
   "description": "",
-  "main": "pong.js",
+  "main": "index.html",
   "homepage": "https://joshuasearle.github.io/power-up-pong/",
   "directories": {
     "test": "test"
