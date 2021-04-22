@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "predeploy": "webpack",
+    "predeploy": "",
     "deploy": "gh-pages -d dist"
   },
   "keywords": [],
