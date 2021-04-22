@@ -13,10 +13,28 @@ H1 {
   font-family: arial, helvetica, sans-serif;
 }
 
-.paddle {
+.score {
+  fill: white;
+  font-family: arial, helvetica, sans-serif;
+}
+
+.welcome-message,
+.game-over {
+  font-family: arial, helvetica, sans-serif;
   fill: white;
 }
 
-.ball {
+.new-game {
+  font-family: arial, helvetica, sans-serif;
   fill: white;
+}
+
+body {
+  width: min-content;
+  margin: auto;
+  text-align: center;
+}
+
+#canvas {
+  margin: auto;
 }
