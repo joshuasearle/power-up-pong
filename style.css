@@ -1,0 +1,40 @@
+BODY,
+H2,
+H3,
+H4,
+H5,
+H6,
+TH,
+TD {
+  font-family: arial, helvetica, sans-serif;
+}
+H1 {
+  font-size: 38px;
+  font-family: arial, helvetica, sans-serif;
+}
+
+.score {
+  fill: white;
+  font-family: arial, helvetica, sans-serif;
+}
+
+.welcome-message,
+.game-over {
+  font-family: arial, helvetica, sans-serif;
+  fill: white;
+}
+
+.new-game {
+  font-family: arial, helvetica, sans-serif;
+  fill: white;
+}
+
+body {
+  width: min-content;
+  margin: auto;
+  text-align: center;
+}
+
+#canvas {
+  margin: auto;
+}
